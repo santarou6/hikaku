@@ -1,0 +1,274 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<title>HIKAKU</title>
+<style type="text/css">
+	body {
+	    background-color: #eeeeee; 
+	    color: #000000; 
+	    margin: 2; 
+	    padding: 2;
+	    font-family: Helvetica;
+	}
+	div {
+	    background-color: #dddddd;
+	    border: 1px solid #ff5555; 
+	}
+
+	table{
+	    width: 100%;
+	    border-collapse: collapse;
+	}
+	tr{
+	    width: 98%;
+	}
+	textarea {
+	    width: 98%;
+	    height: 200px;
+	    border: 2px solid #ffcc77; 
+	}
+	td {
+	    width: 10%;
+	    background-color: #ffffff;
+	    border-right: 1px dotted #555555; 
+	    border-bottom: 1px dotted #555555; 
+	    color: #000000;
+	    font-size: 12px;
+	    padding: 2px; 
+	    text-decoration: none;
+	    font-style: normal;
+	    word-break: break-all;
+	    vertical-align: top;
+	    vertical-align: baseline;
+	}
+	td.d1 {
+	    background-color: #ffffff;
+	    color: #000000;
+	    text-decoration: none;
+	    font-style: normal;
+	}
+	td.d2 {
+	    background-color: #ffffff;
+	    color: #000000;
+	    text-decoration: none;
+	    font-style: normal;
+	}
+	td.d1 em.c1 {
+	    background-color: #FF0000;
+	    display: none;/**/
+	}
+	td.d1 em.c2 {
+	    background-color: #88ff88;
+	}
+	td.d2 em.c1 {
+	    background-color: #8888ff;
+	}
+	td.d2 em.c2 {
+	    background-color: #ffff00;
+	    display: none;/**/
+	}
+	em.c1 {
+	    text-decoration: none;
+	    font-style: normal;
+	    vertical-align: baseline;
+	}
+	em.c2 {
+	    text-decoration: none;
+	    font-style: normal;
+	    vertical-align: baseline;
+	}
+</style>
+<script type="text/javascript">
+var fp = new Array();
+var A = new Array();
+var B = new Array();
+var N;
+var M;
+var mC = new Array();
+
+function init(){
+		document.getElementById('ss1').value = sample_txt[0].t;
+		document.getElementById('ss2').value = sample_txt[1].t;
+}
+
+function hikaku(){
+            mC = new Array();
+            s1 = document.getElementById('ss1').value;
+            s2 = document.getElementById('ss2').value;
+            diffx(s1, s2);
+            var qa,qb;
+            if(s1.length<=s2.length){
+              qa = 1;
+              qb = 2;
+            }else{
+              qa = 2;
+              qb = 1;
+            }
+            var aa = mC.join("").split("\n");
+            var ht = "";
+            document.getElementById('sat1').innerHTML = "";
+            for(var i = 0, len = aa.length; i < len; ++i){
+            	ht = ht + "<tr><td class=\"d"+qa+"\">" + aa[i] + "</td><td class=\"d"+qb+"\">" + aa[i] + "</td></tr>";
+            }
+            document.getElementById('sat1').innerHTML = "<table>" + ht + "</table>";
+            ht = "";
+}
+
+function diffx(c1r, c2r){
+  var A = c1r.split('');
+  var B = c2r.split('');
+  var M = A.length;
+  var N = B.length;
+
+  var exchanged = false;
+
+  if(N > M){
+    exchanged = true;
+    var t;
+    t = A;
+    A = B;
+    B = t;
+    t = M;
+    M = N;
+    N = t;
+  }
+
+  var offset = N;
+  var delta = M - N;
+  var size = M + N + 1;
+  for(var i = 0, fp = []; i < size; ++i){
+    fp[i] = {
+      y    : null,
+      tree : null
+    }
+  }
+  var snake = function(k){
+    if((k < -N) || (M < k)){
+      return;
+    } else {
+      var current = fp[k+offset];
+      if(k === -N){
+        var down  = fp[k+1+offset];
+        current.y = down.y+1;
+        current.tree = {
+          type : '+',
+          prev : down.tree
+        }
+      } else if(k === M){
+        var slide = fp[k-1+offset];
+        current.y = slide.y;
+        current.tree = {
+          type : '-',
+          prev : slide.tree
+        }
+      } else {
+        var slide = fp[k-1+offset];
+        var down  = fp[k+1+offset];
+        if(slide.y === null && down.y === null){
+          current.y = 0;
+        } else if(down.y === null || slide.y === null){
+          if(down.y === null){
+            current.y = slide.y;
+            current.tree = {
+              type : '-',
+              prev : slide.tree
+            }
+          } else {
+            current.y = down.y+1;
+            current.tree = {
+              type : '+',
+              prev : down.tree
+            }
+          }
+        } else {
+          if(slide.y > (down.y+1)){
+            current.y = slide.y;
+            current.tree = {
+              type : '-',
+              prev : slide.tree
+            }
+          } else {
+            current.y = down.y+1;
+            current.tree = {
+              type : '+',
+              prev : down.tree
+            }
+          }
+        }
+      }
+      var y = current.y;
+      var x = y + k;
+      while(x < M && y < N && A[x] === B[y]){
+        current.tree = {
+          type : '|',
+          prev : current.tree
+        }
+        x++;
+        y++;
+      }
+      current.y = y;
+    }
+  }
+
+  var p = -1,
+      k =  0;
+  while(fp[delta+offset].y < N){
+    p = p + 1;
+    for(k = -p; k < delta; ++k){
+      snake(k);
+    }
+    for(k = delta+p; k > delta; --k){
+      snake(k);
+    }
+    snake(delta);
+  }
+
+  var current = fp[delta+offset];
+  current.d = delta + 2 * p;
+  var type = null, a_index = M - 1, b_index = N - 1;
+  for(var i = current.tree; i != null; i = i.prev){
+    type = i.type;
+    if(type === '+'){
+      mC.unshift('<em class=c2>'+ B[b_index] + "</em>");
+      --b_index;
+    } else if(type === '-'){
+      mC.unshift('<em class=c1>'+ A[a_index] + "</em>");
+      --a_index;
+    } else {
+      mC.unshift(A[a_index] );
+      --a_index;
+      --b_index;
+    }
+  }
+}
+
+/*
+ 参考URL
+1.
+http://www.itu.dk/stud/speciale/bepjea/xwebtex/litt/an-onp-sequence-comparison-algorithm.pdf
+2.
+http://hp.vector.co.jp/authors/VA007799/viviProg/doc5.htm
+3.
+http://coding.derkeiler.com/Archive/General/comp.programming/2004-04/0966.html
+4.
+http://constellation.hatenablog.com/entry/20091021/1256112978
+*/
+</script>
+</head>
+
+<body onload="init()">
+<form name="test">
+	<input type="button" value="比較" onClick="hikaku()">
+</form>
+
+<table ><tr>
+<td>text 1 <br/><textarea id="ss1" >[10.  「基準金利」とは、各利息計算期間について当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第1回利息計算期間については実行日）の2営業日前の午前11時または午前11時に可及的に近い午前11時以降の時点において[全国銀行協会が公表する日本円TIBOR(Telerate17097ページ)／ユーロ円TIBOR(Telerate23070ページ)]のうち、■ヶ月の利率をいう。但し、何らかの理由でかかる利率が公表されない場合には、[当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第1回利息計算期間については実行日）の2営業日前の午前11時]までにまたはそれに先立つ直近の時点で東京インターバンク市場における■ヶ月の日本円資金貸借取引のオファードレートとして利率参照貸付人が合理的に決定する利率（年率で表わされる。）の単純平均利率（％表示の小数点第■位[切捨／切上／四捨五入]。）とする。なお、利率参照貸付人は、当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第１回利息計算期間については実行日）の■営業日前の■時までにエージェントに対してかかる利率を提示する。]</textarea></td>
+<td>text 2 <br/><textarea id="ss2" >[10.  「基準金利」とは、各利息計算期間について当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第1回利息計算期間については実行日）の2営業日前の午前11時または午前11時に可及的に近い午前11時以降の時点において[全国銀行協会が公表する日本円TIBOR(Telerate17097ページ)／ユーロ円TIBOR(Telerate23070ページ)]のうち、●▲ヶ月の利率をいう。但し、何らかの理由でかかる利率が公表されない場合には、[当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第1回利息計算期間については実行日）の2営業日前の午前11時]までにまたはそれに先立つ直近の時点で東京インターバンク市場における●▲ヶ月の日本円資金貸借取引のオファードレートとして利率参照貸付人が合理的に決定する利率（年率で表わされる。）の単純平均利率（％表示の小数点第●▲位[切捨／切上／四捨五入]。）とする。なお、利率参照貸付人は、当該各利息計算期間の直前の利息計算期間に係る利払日（但し、第１回利息計算期間については実行日）の●▲営業日前の●▲時までにエージェントに対してかかる利率を提示する。]</textarea></td>
+</tr></table>
+
+<div id="sat1">
+</div>
+
+    </body>
+</html>     
